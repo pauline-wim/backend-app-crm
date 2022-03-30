@@ -26,7 +26,7 @@ mongoose
 app.use(express.json());
 app.use(cookieParser());
 
-const validate = (req, res, next) => {
+const auth = (req, res, next) => {
   let data;
   try {
     data = jwt.verify(req.cookies.jwt, secret);
@@ -93,7 +93,7 @@ app.post("/login", async (req, res) => {
 });
 
 // Add contacts
-app.post("/contacts", validate, async (req, res) => {
+app.post("/contacts", auth, async (req, res) => {
   if (!req.data) {
     res.json({
       message: "Please connect to access your contacts.",
@@ -113,7 +113,20 @@ app.post("/contacts", validate, async (req, res) => {
 });
 
 // Get contacts
-// app.get("/contacts", validate, (req, res) => {});
+app.get("/contacts", auth, async (_req, res) => {
+  let contacts;
+  try {
+    contacts = await Contact.find();
+  } catch (err) {
+    return res.status(400).json({
+      message: `ERROR: ${err}`,
+    });
+  }
+  res.json({
+    nb: contacts.length,
+    data: contacts,
+  });
+});
 
 // ERROR
 app.get("*", (_req, res) => {

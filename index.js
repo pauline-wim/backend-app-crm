@@ -30,13 +30,13 @@ const auth = (req, res, next) => {
   let data;
   try {
     data = jwt.verify(req.cookies.jwt, secret);
+    req.userId = data.id;
+    console.log("User authentified: Request granted!");
   } catch (err) {
     return res.status(401).json({
       message: "Your token is not valid",
     });
   }
-  req.data = data;
-  console.log("User authentified: Request granted!");
   next();
 };
 
@@ -113,10 +113,10 @@ app.post("/contacts", auth, async (req, res) => {
 });
 
 // Get contacts
-app.get("/contacts", auth, async (_req, res) => {
+app.get("/contacts", auth, async (req, res) => {
   let contacts;
   try {
-    contacts = await Contact.find();
+    contacts = await Contact.find({ userId: req.userId });
   } catch (err) {
     return res.status(400).json({
       message: `ERROR: ${err}`,

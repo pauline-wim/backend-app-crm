@@ -9,7 +9,7 @@ dotenv.config({
   path: "./config.env",
 });
 
-const secret = "QzF9mq4F4GK678bzPba12JD479Gh9YF5Hr4wixJ8LmK28G976d";
+const secret = process.env.DB_SECRET;
 
 // Models
 const User = require("./models/userModel");
@@ -125,6 +125,22 @@ app.get("/contacts", auth, async (_req, res) => {
   res.json({
     nb: contacts.length,
     data: contacts,
+  });
+});
+
+// Modify a contact from the list
+app.put("/contacts/:id", auth, async (req, res) => {
+  let contact;
+  try {
+    contact = await Contact.findByIdAndUpdate(req.params.id, req.body);
+  } catch (err) {
+    return res.status(400).json({
+      message: `ERROR: ${err}`,
+    });
+  }
+  res.json({
+    message: `Contact ${req.params.id} has been UPDATED`,
+    "updated contact": req.body.name,
   });
 });
 

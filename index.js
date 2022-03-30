@@ -144,6 +144,20 @@ app.put("/contacts/:id", auth, async (req, res) => {
   });
 });
 
+app.delete("/contacts/:id", auth, async (req, res) => {
+  let contact;
+  try {
+    contact = await Contact.findByIdAndRemove(req.params.id);
+  } catch (err) {
+    return res.status(400).json({
+      message: `ERROR: ${err}`,
+    });
+  }
+  res.json({
+    message: `Contact ${req.params.id} has been DELETED`,
+  });
+});
+
 // ERROR
 app.get("*", (_req, res) => {
   res.status(404).send("404: Page not found");

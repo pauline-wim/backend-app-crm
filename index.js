@@ -26,6 +26,20 @@ mongoose
 app.use(express.json());
 app.use(cookieParser());
 
+const validate = (req, res, next) => {
+  let data;
+  try {
+    data = jwt.verify(req.cookies.jwt, secret);
+  } catch (err) {
+    return res.status(401).json({
+      message: "Your token is not valid",
+    });
+  }
+  req.data = data;
+  console.log("User authentified: Request granted!");
+  next();
+};
+
 // ROUTES
 // Home
 app.get("/", async (_req, res) => {
@@ -79,7 +93,24 @@ app.post("/login", async (req, res) => {
 });
 
 // Add contacts
-app.post("/contacts", validate, async (req, res) => {});
+app.post("/contacts", validate, async (req, res) => {
+  if (!req.data) {
+    res.json({
+      message: "Please connect to access your contacts.",
+    });
+  }
+  try {
+    await Contact.create(req.body);
+  } catch (err) {
+    return res.status(400).json({
+      message: "This account already exists",
+    });
+  }
+
+  res.status(201).json({
+    message: `Contact ${req.body.name} ADDED to your list`,
+  });
+});
 
 // Get contacts
 // app.get("/contacts", validate, (req, res) => {});

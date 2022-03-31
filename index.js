@@ -29,6 +29,21 @@ app.use(express.json());
 app.use(cookieParser());
 app.use("/contacts", contactsRouter);
 
+const auth = (req, res, next) => {
+  let data;
+  try {
+    data = jwt.verify(req.cookies.jwt, secret);
+    req.userId = data.id;
+    req.data = data;
+    console.log("User authentified: Request granted!");
+  } catch (err) {
+    return res.status(401).json({
+      message: "Your token is not valid",
+    });
+  }
+  next();
+};
+
 // ROUTES
 // Create account
 app.post("/register", async (req, res) => {
@@ -76,6 +91,22 @@ app.post("/login", async (req, res) => {
   res.json({
     message: "Successfully connected",
   });
+});
+
+// Logout from account
+app.get("/logout", auth, async (_req, res) => {
+  try {
+    res.clearCookie("jwt");
+    // res.redirect("/");
+    res.json({
+      message: "Cookie deleted",
+      status: "Disconnected",
+    });
+  } catch (err) {
+    return res.status(400).json({
+      message: `Something went wrong ${err}`,
+    });
+  }
 });
 
 // Delete user

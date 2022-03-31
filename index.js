@@ -32,9 +32,11 @@ app.use("/contacts", contactsRouter);
 // ROUTES
 // Create account
 app.post("/register", async (req, res) => {
-  if (req.body.password.length < 6) {
+  const regex = /^(?=.*\d).{6,}$/;
+  if (!regex.test(req.body.password)) {
     return res.status(400).json({
-      message: "Invalid data",
+      message:
+        "Error: Your password must contain at least 6 characters and one digit",
     });
   }
   const hashedPassword = await bcrypt.hash(req.body.password, 12);
@@ -74,6 +76,19 @@ app.post("/login", async (req, res) => {
   res.json({
     message: "Successfully connected",
   });
+});
+
+// Delete user
+app.delete("/users/:id", async (req, res) => {
+  let user;
+  try {
+    user = await User.findByIdAndDelete(req.params.id);
+    res.json({ message: "User DELETED", "user deleted": `${user.email}` });
+  } catch (err) {
+    return res.status(400).json({
+      message: `Something went wrong ${err}`,
+    });
+  }
 });
 
 // ERROR

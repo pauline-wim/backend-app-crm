@@ -48,18 +48,34 @@ router.post("/", auth, async (req, res) => {
 
 // Get contacts
 router.get("/", auth, async (req, res) => {
+  const queryKeys = Object.keys(req.query);
   let contacts;
+  let filteredContacts;
   try {
     contacts = await Contact.find({ userId: req.userId });
+    if (queryKeys.length === 0) {
+      return res.json({
+        nb: contacts.length,
+        data: contacts,
+      });
+    }
+    for (let i = 0; i < queryKeys.length; i++) {
+      filteredContacts = contacts.filter((contact) => {
+        return (
+          contact[queryKeys[i]].toString().toLowerCase().replace(" ", "-") ===
+          req.query[queryKeys[i]].toString().toLowerCase().replace(" ", "-")
+        );
+      });
+    }
+    res.json({
+      nb: filteredContacts.length,
+      data: filteredContacts,
+    });
   } catch (err) {
     return res.status(400).json({
       message: `ERROR: ${err}`,
     });
   }
-  res.json({
-    nb: contacts.length,
-    data: contacts,
-  });
 });
 
 // Modify a contact from the list
@@ -78,6 +94,7 @@ router.put("/:id", auth, async (req, res) => {
   });
 });
 
+// Delete a contact from list
 router.delete("/:id", auth, async (req, res) => {
   let contact;
   try {

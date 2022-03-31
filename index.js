@@ -13,7 +13,9 @@ const secret = process.env.DB_SECRET;
 
 // Models
 const User = require("./models/userModel");
-const Contact = require("./models/contactModel");
+
+// Routers
+const contactsRouter = require("./controllers/contactsRouter");
 
 // Connexion to MongoDB
 mongoose
@@ -25,27 +27,9 @@ mongoose
 // Middlewares
 app.use(express.json());
 app.use(cookieParser());
-
-const auth = (req, res, next) => {
-  let data;
-  try {
-    data = jwt.verify(req.cookies.jwt, secret);
-    req.userId = data.id;
-    console.log("User authentified: Request granted!");
-  } catch (err) {
-    return res.status(401).json({
-      message: "Your token is not valid",
-    });
-  }
-  next();
-};
+app.use("/contacts", contactsRouter);
 
 // ROUTES
-// Home
-app.get("/", async (_req, res) => {
-  res.send("Hello sunshine!");
-});
-
 // Create account
 app.post("/register", async (req, res) => {
   if (req.body.password.length < 6) {
@@ -89,72 +73,6 @@ app.post("/login", async (req, res) => {
   res.cookie("jwt", token, { httpOnly: true, secure: false });
   res.json({
     message: "Successfully connected",
-  });
-});
-
-// Add contacts
-app.post("/contacts", auth, async (req, res) => {
-  if (!req.data) {
-    res.json({
-      message: "Please connect to access your contacts.",
-    });
-  }
-  try {
-    await Contact.create(req.body);
-  } catch (err) {
-    return res.status(400).json({
-      message: "This account already exists",
-    });
-  }
-
-  res.status(201).json({
-    message: `Contact ${req.body.name} ADDED to your list`,
-  });
-});
-
-// Get contacts
-app.get("/contacts", auth, async (req, res) => {
-  let contacts;
-  try {
-    contacts = await Contact.find({ userId: req.userId });
-  } catch (err) {
-    return res.status(400).json({
-      message: `ERROR: ${err}`,
-    });
-  }
-  res.json({
-    nb: contacts.length,
-    data: contacts,
-  });
-});
-
-// Modify a contact from the list
-app.put("/contacts/:id", auth, async (req, res) => {
-  let contact;
-  try {
-    contact = await Contact.findByIdAndUpdate(req.params.id, req.body);
-  } catch (err) {
-    return res.status(400).json({
-      message: `ERROR: ${err}`,
-    });
-  }
-  res.json({
-    message: `Contact ${req.params.id} has been UPDATED`,
-    "updated contact": req.body.name,
-  });
-});
-
-app.delete("/contacts/:id", auth, async (req, res) => {
-  let contact;
-  try {
-    contact = await Contact.findByIdAndRemove(req.params.id);
-  } catch (err) {
-    return res.status(400).json({
-      message: `ERROR: ${err}`,
-    });
-  }
-  res.json({
-    message: `Contact ${req.params.id} has been DELETED`,
   });
 });
 
